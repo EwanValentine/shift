@@ -22,7 +22,7 @@ type Svc struct {
 
 // Parser to parse the DSL
 type Parser interface {
-	Parse(method, signature string) string
+	Parse(method, signature string, hasReturns bool) string
 	Unmarshal(signature string) parser.Signature
 }
 
@@ -56,15 +56,24 @@ func (s *Service) Register(svc interface{}, addr string) error {
 	t := reflect.TypeOf(svc)
 	for i := 0; i < t.NumMethod(); i++ {
 		method := t.Method(i)
-		signatureString := s.parser.Parse(method.Name, method.Type.String())
+		returnCount := method.Type.NumOut()
+		hasReturns := true
+		if returnCount == 0 {
+			hasReturns = false
+		}
+		signatureString := s.parser.Parse(
+			method.Name,
+			method.Type.String(),
+			hasReturns,
+		)
 		s.mu.Lock()
+		defer s.mu.Unlock()
 		updated := append(s.Services, Svc{
 			Signature: signatureString,
 			Addr:      addr,
 		})
 		s.Services = updated
 		s.Service = svc
-		s.mu.Unlock()
 	}
 	return nil
 }
@@ -145,7 +154,6 @@ func (s *Service) invoke(any interface{}, name string, body []byte, signature pa
 		json.Unmarshal(body, data)
 		inputs[key] = reflect.ValueOf(data)
 	}
-	log.Println(inputs)
 	reflect.ValueOf(any).MethodByName(name).Call(inputs)
 }
 

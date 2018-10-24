@@ -9,6 +9,7 @@ import (
 var rgx = regexp.MustCompile(`\((.*?)\)`)
 var pre = regexp.MustCompile(`.*?\((.*?)\)`)
 var sig = regexp.MustCompile(`.*?\:\((.*?)\)\:\((.*?)\)`)
+var noRetSig = regexp.MustCompile(`.*?\:\((.*?)\)`)
 
 // Signature is a parsed signature
 type Signature struct {
@@ -26,9 +27,12 @@ func NewParser() *Parser {
 }
 
 // Parse -
-func (p *Parser) Parse(name, signature string) string {
+func (p *Parser) Parse(name, signature string, hasReturns bool) string {
 	args := extractArgs(signature)
-	rts := extractReturnTypes(signature)
+	var rts []string
+	if hasReturns {
+		rts = extractReturnTypes(signature)
+	}
 	svcSig := formatDSL(name, args, rts)
 	return svcSig
 }
@@ -40,8 +44,11 @@ func (p *Parser) Unmarshal(signature string) Signature {
 
 func formatDSL(method string, args, returns []string) string {
 	argsStr := strings.Join(removeMainPrefix(args[1:]), ", ")
+	if len(returns) == 0 {
+		return fmt.Sprintf("%s:(%s)", method, argsStr)
+	}
+	// srvName := strings.TrimPrefix(args[0], "*main.") // Don't need this, yet.
 	returnsStr := strings.Join(removeMainPrefix(returns), ", ")
-	// srvName := strings.TrimPrefix(args[0], "*main.")
 	return fmt.Sprintf("%s:(%s):(%s)", method, argsStr, returnsStr)
 }
 
@@ -67,14 +74,31 @@ func extractReturnTypes(args string) []string {
 // of the method and arguments
 func parseSignature(signature string) Signature {
 	rs := strings.Split(signature, ":")
+	count := len(rs)
+	hasReturns := true
 	argGroup := rs[len(rs)-2]
+	if count <= 2 {
+		hasReturns = false
+	}
+
+	// If this signature has no return type,
+	// args will be in a different position
+	if hasReturns == false {
+		argGroup = rs[len(rs)-1]
+	}
+
 	argGroup = strings.TrimPrefix(argGroup, "(")
 	argGroup = strings.TrimSuffix(argGroup, ")")
 	args := strings.Split(argGroup, ", ")
-	retGroup := rs[len(rs)-1:][0]
-	ret := strings.TrimPrefix(retGroup, "(")
-	ret = strings.TrimSuffix(ret, ")")
-	rets := strings.Split(ret, ", ")
+
+	var rets []string
+	if hasReturns {
+		retGroup := rs[len(rs)-1:][0]
+		ret := strings.TrimPrefix(retGroup, "(")
+		ret = strings.TrimSuffix(ret, ")")
+		rets = strings.Split(ret, ", ")
+	}
+
 	return Signature{
 		Method: rs[0],
 		Args:   args,

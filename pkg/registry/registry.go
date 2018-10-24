@@ -1,7 +1,6 @@
 package registry
 
 import (
-	"log"
 	"reflect"
 	"sync"
 )
@@ -24,11 +23,9 @@ func NewRegistry() *Registry {
 
 // Register a type with a string value
 func (r *Registry) Register(name string, element interface{}) {
-	log.Println("TeSTST")
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.types[name] = reflect.TypeOf(element)
-	log.Println(r.types)
 }
 
 // Deregister a type
