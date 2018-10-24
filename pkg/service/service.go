@@ -56,10 +56,10 @@ func (s *Service) Register(svc interface{}, addr string) error {
 	t := reflect.TypeOf(svc)
 	for i := 0; i < t.NumMethod(); i++ {
 		method := t.Method(i)
-		svcSig := s.parser.Parse(method.Name, method.Type.String())
+		signatureString := s.parser.Parse(method.Name, method.Type.String())
 		s.mu.Lock()
 		updated := append(s.Services, Svc{
-			Signature: svcSig,
+			Signature: signatureString,
 			Addr:      addr,
 		})
 		s.Services = updated
@@ -69,7 +69,16 @@ func (s *Service) Register(svc interface{}, addr string) error {
 	return nil
 }
 
+// RegisterType registers a custom type so's it can be called by name
+func (s *Service) RegisterType(name string, instance interface{}) {
+	s.registry.Register(name, instance)
+}
+
 func (s *Service) callService(svc Svc, event Event) (string, error) {
+	// @todo - currently this just uses JSON over HTTP.
+	// Eventually I'd like to make the transport type configurable.
+	// Or even just expose events/services at a code level,
+	// so you can implement your own transport.
 	data, err := json.Marshal(event)
 	if err != nil {
 		return "", err
@@ -130,15 +139,13 @@ func (s *Service) Emit(event Event) error {
 // Invoke a function by name
 func (s *Service) invoke(any interface{}, name string, body []byte, signature parser.Signature) {
 	args := signature.Args
-	log.Println(args[0])
-	data := s.registry.MakeInstance(signature.Args[0])
-	json.Unmarshal(body, data)
 	inputs := make([]reflect.Value, len(args))
-	for i := range signature.Args {
-		log.Println(reflect.TypeOf(data))
-		log.Println(reflect.ValueOf(data))
-		inputs[i] = reflect.ValueOf(data)
+	for key, arg := range args {
+		data := s.registry.MakeInstance(arg)
+		json.Unmarshal(body, data)
+		inputs[key] = reflect.ValueOf(data)
 	}
+	log.Println(inputs)
 	reflect.ValueOf(any).MethodByName(name).Call(inputs)
 }
 

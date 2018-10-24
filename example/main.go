@@ -1,19 +1,41 @@
 package main
 
-import "log"
+import (
+	"fmt"
+	"log"
 
-type MyService struct{}
+	shift "github.com/EwanValentine/shift/pkg/service"
+)
 
-func (s *MyService) PrintUser(user *User) {
-	log.Println(user)
+// User -
+type User struct {
+	Name string
+	Age  uint
+}
+
+// Test -
+type Test struct {
+	Date uint64
+}
+
+// ExampleService -
+type ExampleService struct{}
+
+// Greet - Example Greet:(*User, *Test):(string)
+func (svc *ExampleService) Greet(user *User, test *Test) (string, error) {
+	log.Println("Hello, this is test", user)
+	log.Println("Received at:", test.Date)
+	return fmt.Sprintf("Hello %s I am %d", user.Name, user.Age), nil
 }
 
 func main() {
-	srv := shift.NewService()
-	srv.Expose(MyService{})
-	srv.Emit(shift.Event{
-		Signature: "PrintOrder:(order *Order)",
-		Body:      []byte(`{ "order": "abc123" }`),
+	service := shift.NewService()
+	service.Register(&ExampleService{}, "http://localhost:5002")
+	service.RegisterType("*User", User{})
+	service.RegisterType("*Test", Test{})
+	service.Emit(shift.Event{
+		Signature: "Greet:(*User, *Test):(string, error)",
+		Body:      []byte(`{ "name": "Ewan", "age": 29 }`),
 	})
-	srv.Run(":8080")
+	service.Run(":5002")
 }
