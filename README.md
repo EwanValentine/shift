@@ -3,13 +3,12 @@
 # Shift
 De-coupled, event-driven microservice architecture. Based around Golangs interface design.
 
-## Note
+## Note
 This is a purely theoretical currently, although the examples function. It currently doesn't have service discovery, you're currently hard-coding network locations, and those locations aren't currently shared across multiple instances. 
 
 If this design is validated, then I'll start to create integrations with services such as Consul, ZooKeeper etc. Oh and different transport methods, such as gRPC, NATS, etc.
 
 ## Design
-
 This project is inspired by Golangs interface system. I was thinking of ways in which you can trigger events without having to worry about registering handlers, thinking up event names etc. I enjoy the experience of using gRPC and similar tools, where talking to another service, just feels like executing code.
 
 I also enjoy tools such as GraphQL, whereby you use a rich domain specific language to perform tasks and operations. However, I felt that gRPC tended to be good for coupled services. In other words, you make a request to another service, and you get a response back. 
@@ -36,7 +35,6 @@ This allows us to emit de-coupled events across services, using the behaviour of
 Possible variations on this, currently we're looking at the method, the argument signature, and the return types. We could also take into account the struct name if we wanted to be more focussed, or even talk directly to another service. Or we could be more loose and purely base our events on argument signature and return types. For example, emit this event to anything which takes a `*User` argument and returns a `*CreatedUser` object.
 
 ## Code Example
-
 ```go
 package main
 
@@ -92,12 +90,12 @@ func main() {
 }
 ```
 
-## Run Example
+## Run Example
 ```
 $ cd example && vgo run test.go
 ```
 
-## Todo
+## Todo
 - Integrate service discovery.
 - Integrate different transports.
 - Tidy up code.
@@ -106,4 +104,5 @@ $ cd example && vgo run test.go
 
 ## Feedback welcome
 [Email Me](ewan.valentine89@gmail.com)
+
 [Tweet Me](https://twitter.com/Ewan_Valentine)
