@@ -96,11 +96,11 @@ $ cd example && vgo run test.go
 ```
 
 ## Todo
-- [ ] Integrate service discovery.
-- [ ] Integrate different transports.
-- [ ] Tidy up code.
-- [ ] Add tests, I know, I've already written the code.
-- [ ] Benchmark and optimise.
+- Integrate service discovery.
+- Integrate different transports.
+- Tidy up code.
+- Add tests, I know, I've already written the code.
+- Benchmark and optimise.
 
 ## Feedback welcome
 [Email Me](ewan.valentine89@gmail.com)
